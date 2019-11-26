@@ -1,0 +1,135 @@
+# File: Huffman Coding
+
+# Description: Compress a file using a binary tree
+
+# Date Created: 6/24/2019
+
+# Last Edited: 6/25/2019
+
+# Import heapq to implement heap queue
+from heapq import heappop, heappush
+from collections import Counter
+
+EOF = 0x100
+
+# Node class to create tree
+class Node (object):
+    def __init__(self,data,freq):
+        self.data = data
+        self.freq = freq
+        self.lchild = None
+        self.rchild = None
+    
+    # Less than function to specify node comparison
+    def __lt__(self, other):
+        return self.freq < other.freq
+    
+    # Determines if a node is a leaf
+    def isleaf(self):
+        if self.lchild == None and self.rchild == None:
+            return True
+
+    # Prints the completed tree
+    def printTree(self, level=0):
+        ret = "\t"*level + str(self.data) + "\n"
+        if self.lchild is not None:
+            ret += self.lchild.printTree(level + 1)
+        if self.rchild is not None:
+            ret += self.rchild.printTree(level + 1)
+        return ret
+
+# In order traversal to find a character and return path using 0 and 1
+def inOrderTraversal(node, char, code= ""):
+    if node == None:
+        return ""
+    if node.isleaf():
+        if node.data == char:
+            return code
+
+    ret = ""
+    ret += inOrderTraversal(node.lchild, char, code + "0")
+    ret += inOrderTraversal(node.rchild, char, code + "1")
+    return ret
+
+# Pre order traversal to return compressed code
+def preOrderTraversal(node):
+    if node == None:
+        return ""
+    if node.isleaf():
+        return "1" + '{0:09b}'.format(node.data)
+    
+    ret = "0"
+    ret += preOrderTraversal(node.lchild)
+    ret += preOrderTraversal(node.rchild)
+    return ret
+
+# Writes to a file named outputFileName pure binary given a binary string
+def writeToFile(binaryString, outputFileName):
+    # First split into 8-bit chunks
+    bitStrings = [binaryString[i:i + 8].ljust(8,'0') for i in range(0, len(binaryString), 8)]
+
+    # Convert to integers
+    byteList = [int(b, 2) for b in bitStrings]
+
+    with open(outputFileName, 'wb') as file:
+        # Convert to bytearray before writing
+        file.write(bytearray(byteList)) 
+
+# Seperate method to read the file in chunks instead of byte 
+# by byte to improve performance
+def bytesFromFile(fileName, blockSize=8192):
+    with open(fileName, 'rb') as file:
+        while True:
+            chunk = file.read(blockSize)
+            if chunk:
+                for byte in chunk:
+                    yield byte
+            else:
+                break
+
+def main():
+# Start of Huffman encoding
+# Make a dictionary tracking the frequencies of each character
+    hashdict = Counter(bytesFromFile("huff.txt"))
+    
+# Create a min heap (used as a priority queue) and fill leaf node for each character
+    heap = []
+    for key in hashdict:
+        newNode = Node(key,hashdict[key])
+        heappush(heap,newNode)
+    
+    heappush(heap, Node(EOF, 1))
+
+    while len(heap) > 1:
+    # Take two nodes with lowest frequency
+        lchild = heappop(heap)
+        rchild = heappop(heap)
+
+    # Create new internal node w frequency equal to sum of l,r child
+        newvalue = lchild.freq + rchild.freq
+        newNode = Node(None,newvalue)
+        newNode.lchild = lchild
+        newNode.rchild = rchild
+        heappush(heap,newNode)
+    
+    # The remaining node in the heap is the root
+    root = heappop(heap)
+    print(root.printTree())
+
+    # In order traversal to find a specified byte and print the code
+    # Traverse left, root, right
+    traverse = ""
+    for byte in bytesFromFile("huff.txt"):
+        traverse += inOrderTraversal(root, byte)
+
+    # Call pre order traversal to determine compressed code
+    # Traverse root, left, right
+    byte = ""
+    newbyte = preOrderTraversal(root)
+
+    # Create a header
+    header = len(newbyte)
+
+# Write to the file
+    writeToFile("{0:016b}".format(header) + newbyte + traverse,"finalcode")
+main()

@@ -1,0 +1,121 @@
+#  Description: Create an expression tree using the given file
+
+class Stack (object):
+    def __init__ (self):
+        self.stack = []
+
+  # add an item to the top of the stack
+    def push (self, item):
+        self.stack.append (item)
+
+  # remove an item from the top of the stack
+    def pop (self):
+        return self.stack.pop()
+
+  # check if the stack is empty
+    def is_empty (self):
+        return (len (self.stack) == 0)
+
+class Node (object):
+    #initialize object
+    def __init__(self,data):
+        self.data = data
+        self.lchild = None
+        self.rchild = None
+
+class Tree (object):
+    #initialize object
+    def __init__ (self):
+        self.root = None
+    def create_tree (self, expr):
+        theStack = Stack()
+        operator = ["+","-","*","/","//","%","**"]
+        for element in expr:
+            #the element is a "("
+            if element == "(":
+                if self.root == None:
+                    currentNode = Node(0)
+                    self.root = currentNode
+                    theStack.push(currentNode)
+                    currentNode.lchild = Node(0)
+                    currentNode = currentNode.lchild
+                else:
+                    currentNode.lchild = Node(0)
+                    theStack.push(currentNode)
+                    currentNode = currentNode.lchild
+            #the element is a ")"
+            elif element == ")":
+                if not theStack.is_empty():
+                    currentNode = theStack.pop()
+            #the element is an operator
+            elif element in operator:
+                currentNode.data = element
+                theStack.push(currentNode)
+                currentNode.rchild = Node(0)
+                currentNode = currentNode.rchild
+            #the element is an operand
+            else:
+                currentNode.data = element
+                currentNode = theStack.pop()
+
+    #evaluate the expression using the expression tree
+    def evaluate (self, aNode):
+        expression = ""
+        if aNode == None:
+            return expression
+        expression += str(self.evaluate(aNode.lchild))
+        print(expression)
+        expression += str(aNode.data)
+        print(expression)
+        expression += str(self.evaluate(aNode.rchild))
+        print(expression)
+        return eval(expression)
+
+    #print prefix expression
+    def pre_order (self, aNode):
+        prefix = ""
+        if aNode == None:
+            return prefix
+        prefix += str(aNode.data) + " "
+        prefix += str(self.pre_order(aNode.lchild)) 
+        prefix += str(self.pre_order(aNode.rchild))
+        return prefix
+
+    #print the postfix expression
+    def post_order (self, aNode):
+        postfix = ""
+        if aNode == None:
+            return postfix
+        postfix += str(self.post_order(aNode.lchild)) 
+        postfix += str(self.post_order(aNode.rchild))
+        postfix += str(aNode.data) + " "
+        return postfix
+
+def main():
+    #open file
+    inf = open("expression.txt","r")
+    line = inf.readline().rstrip()
+    evalline = line
+    #turn line from file into a list
+    line = line.split()
+    #create the expression tree using the list
+    tree = Tree()
+    tree.create_tree(line)
+
+    #evaluate expression
+    evaluate = tree.evaluate(tree.root)
+    print(evalline, "=", evaluate)
+    print()
+
+    #print the prefix expression
+    prefix = tree.pre_order(tree.root)
+    print("Prefix Expression:",prefix)
+    print()
+    
+    #print the postfix expression 
+    postfix = tree.post_order(tree.root)
+    print("Postfix Expression:",postfix)
+
+    #close the file
+    inf.close()
+main()

@@ -1,0 +1,175 @@
+#  Description: Encrypting and decrypting a given text file 
+
+#  Date Created: 2/4/19
+
+#  Date Last Modified: 2/8/19
+import math
+import copy
+
+#split line and return in int or string
+def splitNumber(file):
+    dimension = file.readline().split()
+    newNumber = (dimension[0])
+    return newNumber
+
+#finding M and returning it to def encrypt
+def findM(num):
+    squares = []
+    for x in range(1,11):
+        squares.append(x**2)
+    for square in squares:
+        if square >= num:
+            a = square
+            break
+    return a
+
+#initializing a grid and filling it with zeros
+def makegrid(dimension):
+    grid = []
+    for r in range(dimension):
+        r = []
+        for c in range(dimension):
+            r.append(str(0))
+        grid.append(r)
+    return grid
+
+#append asterisk, fill in matrix with string
+def fillin(grid,length,text,asterisk):
+    s = 0
+    for row in range(length):
+        for column in range(len(grid[0])):
+            grid[row][column] = text[s]
+            s += 1
+            
+    return grid
+
+#fill in matrix with string for decrypting
+def defillin(grid,length,text,asterisk):
+    s = 0
+        
+    for row in range(length):
+        for column in range(len(grid[0])):
+            if grid[row][column] != "*":
+                grid[row][column] = text[s]
+                s += 1
+            
+    return grid
+
+# rotate the matrix 90 degrees clockwise
+def rotate(grid,length,text):
+    column = length - 1
+    i = 0
+    for col in range(length):
+        for row in range(len(grid[0])):
+            grid[row][column] = text[i]
+            i += 1
+        column -= 1
+    return grid
+
+#rotate matrix 90 degrees counterclockwise
+def derotate(grid,length,text):
+    oldcol= length - 1
+    oldro = 0
+    oldgrid = copy.deepcopy(grid)
+    for row in range(len(grid)):
+        for column in range(len(grid[0])):
+            grid[row][column] = oldgrid[oldro][oldcol]
+            oldro += 1
+        oldro = 0
+        oldcol -= 1
+    return grid
+            
+    
+# takes a string and returns the encrypted string
+def encrypt ( strng ):
+    string = splitNumber(strng)
+    #message length
+    L = len(string)
+    #smallest square root >= L
+    M = findM(L)
+    #dimension of 2D list
+    K = int(math.sqrt(M))
+    matrix = makegrid(K)
+    pad = int(M - L)
+    #fill in matrix
+    for num in range(pad):
+        string = string + "*"
+    matrix = fillin(matrix,K,string,pad)
+    #rotate matrix
+    encrypt = rotate(matrix,K,string)
+
+    #print the encrypted string
+    newstring = ""
+    for row in (range(K)):
+        for column in range(len(encrypt[0])):
+            if encrypt[row][column] != "*":
+                newstring = newstring + encrypt[row][column]
+    return newstring
+
+        
+# takes an encrypted string and returns the plain text version
+def decrypt ( strng ):
+    line = splitNumber(strng)
+    #message length
+    L = len(line)
+    #smallest square root >= L
+    M = findM(L)
+    #dimension of 2D list
+    K = int(math.sqrt(M))
+    matrix = makegrid(K)
+    padded = int(M - L)
+        
+    #fill in matrix
+    num = K - 1
+    row = K - 1
+    column = 0
+    for x in range(padded):
+        if row == 0:
+            matrix[row][column] = "*"
+            column += 1
+            row = K - 1
+        else:
+            matrix[row][column] = "*"
+            row -= 1
+                    
+    matrix = defillin(matrix,K,line,padded)
+    
+    #rotate matrix 90 degree counterclockwise
+    decrypt = derotate(matrix,K,line)
+
+    #print decrypted string
+    newstring = ""
+    for row in (range(K)):
+        for column in range(len(decrypt[0])):
+            if decrypt[row][column] != "*":
+                newstring = newstring + decrypt[row][column]
+    return newstring
+
+
+def main():
+    # open file encrypt.txt
+    inf = open("encrypt.txt","r")
+    
+    # encrypt and output all lines in file encrypt.txt
+    print("Encryption:")
+    loop = inf.readline().split()
+    loop = eval(loop[0])
+    for x in range(loop):
+        encrypted = encrypt(inf)
+        print(encrypted)
+    
+    # open file decrypt.txt
+    infdec = open("decrypt.txt","r")
+    
+    # decrypt and output all lines in file decrypt.txt
+    print("\nDecryption:")
+    repeat = infdec.readline().split()
+    repeat = eval(repeat[0])
+    for x in range(repeat):
+        decrypted = decrypt(infdec)
+        print(decrypted)
+
+
+    inf.close()
+    infdec.close()
+main()

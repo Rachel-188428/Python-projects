@@ -1,0 +1,108 @@
+#  Description: Generate permutations of a magic square based off of user input
+
+#  Date Created: 3/19/2019
+
+#  Date Last Modified: 3/28/2019
+
+#making 1D list of integers 1-16
+def one_list(startlist):
+    for x in range(1,17):
+        startlist.append(x)
+    return startlist
+
+#permute 1D list
+def permute (a, lo, hi, permutelist, n):
+    #if there are enough permutatations that the user specified, stop
+    if len(permutelist) == n:
+        return
+    #check if each row adds up to 34
+    if lo % 4 == 0:
+        for r in range(int(lo/4)):
+            total = 0
+
+            for i in range(4):
+                total += a[r*4+i]
+            if total != 34:
+                return
+    if (lo == hi):
+        i = 0
+        sum1 = 0
+        sum2 = 0
+        sum3 = 0
+        #check if diagonal adds up to 34
+        while (i <= hi - 1):
+            sum1 += a[i]
+            i += (4+1)
+        j = 12
+        while (j >= 4-1):
+            sum2 += a[j]
+            j -= (4 - 1)
+        #check if column adds to 34
+        for i in range(4):
+            sum3 = 0
+            for c in range(4):
+                sum3 += a[c*4+i]
+
+            if sum3 != 34:
+                return
+
+        if sum1 == 34 and sum2 == 34:
+            permutelist.append(list(a))
+        return
+    else:
+        for i in range(lo,hi):
+            a[i], a[lo] = a[lo], a[i]
+            
+            permute (a, lo + 1, hi, permutelist, n)
+            a[i], a[lo] = a[lo], a[i]
+        
+#create empty 2D list with 0's
+def makegrid(size):
+    grid = []
+    for r in range(size):
+        r = []
+        for c in range(size):
+            r.append(0)
+        grid.append(r)
+    return grid
+
+#fill in empty 2D list with permutelist
+def convert(permutelist,matrix):
+    i = 0
+    for row in range(len(matrix)):
+        for col in range(len(matrix)):
+            matrix[row][col] = permutelist[i]
+            i += 1
+    return matrix
+
+def main():
+    #Keep prompting user until n is in the range
+    n = int(input("Enter number of magic squares (2 - 20): "))
+    while n not in range(2,21):
+        n = int(input("Enter number of magic squares (2 - 20): "))
+
+    #Create 1D list of integers 1-16
+    onelist = []
+    onelist = one_list(onelist)
+
+    #Permute 1D list
+    permutelist = []
+    a = onelist
+    lo = 0
+    hi = len(onelist)
+    permute(a, lo, hi, permutelist, n)
+    
+    #Convert 1D list into 2D list
+    grid = makegrid(4)
+    for permuting in range(len(permutelist)):
+        converted = convert(permutelist[permuting],grid)
+
+        print()
+        for i in converted:
+            for j in i:
+                print(f'{j:2d}', end= "  ")
+            print()
+    print()
+    
+
+main()
